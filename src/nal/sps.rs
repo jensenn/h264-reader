@@ -217,6 +217,26 @@ impl ChromaFormat {
             _ => ChromaFormat::Invalid(chroma_format_idc)
         }
     }
+
+    pub fn sub_width(&self) -> u8 {
+        match self {
+            ChromaFormat::Monochrome => 0,
+            ChromaFormat::YUV420 => 2,
+            ChromaFormat::YUV422 => 2,
+            ChromaFormat::YUV444 => 1,
+            ChromaFormat::Invalid(_) => 0,
+        }
+    }
+
+    pub fn sub_height(&self) -> u8 {
+        match self {
+            ChromaFormat::Monochrome => 0,
+            ChromaFormat::YUV420 => 2,
+            ChromaFormat::YUV422 => 1,
+            ChromaFormat::YUV444 => 1,
+            ChromaFormat::Invalid(_) => 0,
+        }
+    }
 }
 
 // _Profile Indication_ value
