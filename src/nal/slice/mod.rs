@@ -8,7 +8,7 @@ use crate::nal::sps;
 use crate::nal::sps::SeqParameterSet;
 use crate::nal::NalHeader;
 
-#[derive(Debug,PartialEq)]
+#[derive(Clone, Copy, Debug,PartialEq)]
 pub enum SliceFamily {
     P,
     B,

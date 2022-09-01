@@ -243,6 +243,9 @@ pub trait BitRead {
     /// This is similar to `finish_rbsp`, but SEI payloads have no trailing bits if
     /// already byte-aligned.
     fn finish_sei_payload(self) -> Result<(), BitReaderError>;
+
+    /// Aligns the bitstream so that the next bit in the bitstream is the first bit in a byte
+    fn align_cabac(&mut self) -> Result<(), BitReaderError>;
 }
 
 /// Reads H.264 bitstream syntax elements from an RBSP representation (no NAL
@@ -292,6 +295,19 @@ impl<R: std::io::BufRead + Clone> BitRead for BitReader<R> {
 
     fn read_u32(&mut self, bit_count: u32, name: &'static str) -> Result<u32, BitReaderError> {
         self.reader.read(bit_count).map_err(|e| BitReaderError::ReaderErrorFor(name, e))
+    }
+
+    fn align_cabac(&mut self) -> Result<(), BitReaderError> {
+        while !self.reader.byte_aligned() {
+            if !self.reader.read_bit().map_err(|e| BitReaderError::ReaderErrorFor("byte_align", e))? {
+                // It was a zero! Determine if we're past the end or haven't reached it yet.
+                match self.reader.read_unary1() {
+                    Err(e) => return Err(BitReaderError::ReaderErrorFor("byte_align", e)),
+                    Ok(_) => return Err(BitReaderError::RemainingData),
+                }    
+            }
+        }
+        Ok(())
     }
 
     fn read_i32(&mut self, bit_count: u32, name: &'static str) -> Result<i32, BitReaderError> {
