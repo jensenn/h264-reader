@@ -356,6 +356,8 @@ pub struct SliceHeader {
     pub sp_for_switch_flag: Option<bool>,
     pub slice_qs: Option<u32>,
     pub disable_deblocking_filter_idc: u8,
+    pub slice_alpha_c0_offset_div2: i32,
+    pub slice_beta_offset_div2: i32,
 }
 impl SliceHeader {
     pub fn from_bits<'a, R: BitRead>(ctx: &'a Context, r: &mut R, header: NalHeader) -> Result<(SliceHeader, &'a SeqParameterSet, &'a PicParameterSet), SliceHeaderError> {
@@ -484,6 +486,8 @@ impl SliceHeader {
             None
         };
         let mut disable_deblocking_filter_idc = 0;
+        let mut slice_alpha_c0_offset_div2 = 0;
+        let mut slice_beta_offset_div2 = 0;
         if pps.deblocking_filter_control_present_flag {
             disable_deblocking_filter_idc = {
                 let v = r.read_ue("disable_deblocking_filter_idc")?;
@@ -493,11 +497,11 @@ impl SliceHeader {
                 v as u8
             };
             if disable_deblocking_filter_idc != 1 {
-                let slice_alpha_c0_offset_div2 = r.read_se("slice_alpha_c0_offset_div2")?;
+                slice_alpha_c0_offset_div2 = r.read_se("slice_alpha_c0_offset_div2")?;
                 if slice_alpha_c0_offset_div2 < -6 || 6 < slice_alpha_c0_offset_div2 {
                     return Err(SliceHeaderError::InvalidSliceAlphaC0OffsetDiv2(slice_alpha_c0_offset_div2));
                 }
-                let _slice_beta_offset_div2 = r.read_se("slice_beta_offset_div2")?;
+                slice_beta_offset_div2 = r.read_se("slice_beta_offset_div2")?;
             }
         }
         if !r.has_more_rbsp_data("slice_header")? {
@@ -524,6 +528,8 @@ impl SliceHeader {
             sp_for_switch_flag,
             slice_qs,
             disable_deblocking_filter_idc,
+            slice_alpha_c0_offset_div2,
+            slice_beta_offset_div2,
         };
         Ok((header, sps, pps))
     }
